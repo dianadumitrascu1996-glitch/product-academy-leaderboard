@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Academy - Leaderboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .admin-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .admin-status.logged-in {
+            background: rgba(40, 167, 69, 0.8);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            min-width: 120px;
+        }
+
+        .tab.active {
+            background: white;
+            border-bottom: 3px solid #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .tab.admin-only {
+            display: none;
+        }
+
+        .tab.admin-only.show {
+            display: block;
+        }
+
+        .tab-content {
+            padding: 30px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: transform 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .leaderboard {
+            margin-top: 20px;
+        }
+
+        .participant {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #ff6b6b;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .participant:hover {
+            transform: translateX(5px);
+        }
+
+        .rank {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-right: 20px;
+            min-width: 50px;
+        }
+
+        .participant-info {
+            flex: 1;
+        }
+
+        .participant-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .participant-team {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .points {
+            font-size: 20px;
+            font-weight: bold;
+            color: #28a745;
+            margin-right: 15px;
+        }
+
+        .participant-actions {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .participant-actions.show {
+            display: flex;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .activity-log {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .activity-item {
+            padding: 15px;
+            border-bottom: 1px solid #f8f9fa;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-actions {
+            display: none;
+            gap: 10px;
+        }
+
+        .activity-actions.show {
+            display: flex;
+        }
+
+        .admin-controls {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .admin-controls.show {
+            display: block;
+        }
+
+        .demo-content {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .admin-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .activity-management {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .activity-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .activity-entry {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .activity-entry-info {
+            flex: 1;
+        }
+
+        .activity-entry-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .activity-entry-points {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .activity-entry-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .inline-form {
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+            margin-bottom: 20px;
+        }
+
+        .points-editor {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .points-editor input {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid #e9ecef;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .participant {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .rank {
+                margin-bottom: 10px;
+            }
+
+            .participant-actions {
+                flex-direction: row;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .inline-form {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .activity-entry {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .activity-entry-actions, .activity-actions {
+                margin-top: 10px;
+                justify-content: center;
+            }
+
+            .activity-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .points-editor {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Product Academy</h1>
+            <p>Leaderboard & Engagement Platform - eMAG</p>
+            <div class="admin-status" id="admin-status" onclick="toggleAdmin()">
+                👤 Utilizator
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('leaderboard')">📊 Leaderboard</button>
+            <button class="tab admin-only" onclick="showTab('add-participant')">👤 Adaugă Participant</button>
+            <button class="tab admin-only" onclick="showTab('add-points')">⭐ Adaugă Puncte</button>
+            <button class="tab admin-only" onclick="showTab('manage-activities')">⚙️ Gestionează Activități</button>
+            <button class="tab" onclick="showTab('activity')">📝 Activitate</button>
+        </div>
+
+        <div id="leaderboard" class="tab-content active">
+            <div class="stats">
+                <div class="stat-card">
+                    <h3 id="total-participants">3</h3>
+                    <p>Participanți Activi</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="total-points">920</h3>
+                    <p>Puncte Totale</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="this-month-activities">15</h3>
+                    <p>Activități Luna Aceasta</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="last-update">Acum</h3>
+                    <p>Ultima Actualizare</p>
+                </div>
+            </div>
+
+            <div class="admin-controls" id="admin-toolbar">
+                <button class="btn" onclick="refreshData()">🔄 Actualizează</button>
+                <button class="btn btn-secondary" onclick="exportData()">📥 Export CSV</button>
+                <button class="btn btn-secondary" onclick="toggleDeleteMode()">🗑️ Mod Ștergere</button>
+                <button class="btn btn-info" onclick="toggleEditMode()">✏️ Mod Editare Puncte</button>
+            </div>
+
+            <div class="leaderboard" id="leaderboard-list">
+                <!-- Participanții vor fi afișați aici -->
+            </div>
+        </div>
+
+        <div id="add-participant" class="tab-content">
+            <div class="admin-warning">
+                🔒 <strong>Zona Administrator</strong> - Doar tu poți adăuga participanți
+            </div>
+            <h2>Adaugă Participant Nou</h2>
+            <form id="participant-form">
+                <div class="form-group">
+                    <label for="participant-name">Nume Complet:</label>
+                    <input type="text" id="participant-name" placeholder="ex: Ana-Maria Popescu" required>
+                </div>
+                <div class="form-group">
+                    <label for="participant-email">Email:</label>
+                    <input type="email" id="participant-email" placeholder="ana.popescu@emag.ro" required>
+                </div>
+                <div class="form-group">
+                    <label for="participant-team">Echipa:</label>
+                    <input type="text" id="participant-team" placeholder="ex: Product Management" required>
+                </div>
+                <div class="form-group">
+                    <label for="participant-role">Rol (opțional):</label>
+                    <input type="text" id="participant-role" placeholder="ex. Product Manager, Product Owner">
+                </div>
+                <button type="submit" class="btn">Adaugă Participant</button>
+            </form>
+        </div>
+
+        <div id="add-points" class="tab-content">
+            <div class="admin-warning">
+                🔒 <strong>Zona Administrator</strong> - Doar tu poți adăuga puncte
+            </div>
+            <h2>Adaugă Puncte</h2>
+            <form id="points-form">
+                <div class="form-group">
+                    <label for="select-participant">Selectează Participant:</label>
+                    <select id="select-participant" required>
+                        <option value="">Alege participant...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="activity-type">Tipul Activității:</label>
+                    <select id="activity-type" required>
+                        <option value="">Alege activitatea...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="activity-description">Descriere (opțional):</label>
+                    <textarea id="activity-description" rows="3" placeholder="Detalii despre activitate..."></textarea>
+                </div>
+                <button type="submit" class="btn">Adaugă Puncte</button>
+            </form>
+        </div>
+
+        <div id="manage-activities" class="tab-content">
+            <div class="admin-warning">
+                🔒 <strong>Zona Administrator</strong> - Gestionează tipurile de activități și punctajele
+            </div>
+            <h2>Gestionează Activități</h2>
+            
+            <div class="activity-management">
+                <h3>Adaugă Activitate Nouă</h3>
+                <form id="activity-management-form">
+                    <div class="inline-form">
+                        <div class="form-group">
+                            <label for="new-activity-name">Numele Activității:</label>
+                            <input type="text" id="new-activity-name" placeholder="ex: Workshop intern" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-activity-points">Puncte:</label>
+                            <input type="number" id="new-activity-points" placeholder="ex: 25" min="1" max="200" required>
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-success">➕ Adaugă</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="activity-management">
+                <h3>Activități Existente</h3>
+                <div class="activity-list" id="activity-list">
+                    <!-- Lista cu activități va fi populată aici -->
+                </div>
+            </div>
+        </div>
+
+        <div id="activity" class="tab-content">
+            <h2>Jurnal de Activitate</h2>
+            
+            <div class="admin-controls" id="activity-admin-controls">
+                <button class="btn btn-warning" onclick="toggleActivityEditMode()">✏️ Editează Activități</button>
+            </div>
+            
+            <div class="activity-log" id="activity-log">
+                <!-- Activitățile vor fi afișate aici -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <h3>🔐 Acces Administrator</h3>
+            <p>Introdu parola pentru a accesa funcțiile de administrare:</p>
+            <div class="form-group">
+                <input type="password" id="admin-password" placeholder="Parola administrator">
+            </div>
+            <button class="btn" onclick="attemptLogin()">Conectează-te</button>
+            <button class="btn btn-secondary" onclick="closeModal('login-modal')">Anulează</button>
+        </div>
+    </div>
+
+    <!-- Edit Points Modal -->
+    <div class="modal" id="edit-points-modal">
+        <div class="modal-content">
+            <h3>✏️ Editează Puncte</h3>
+            <div id="edit-points-content">
+                <!-- Content will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Participant Activities Modal -->
+    <div class="modal" id="participant-activities-modal">
+        <div class="modal-content">
+            <h3>📝 Activități Participant</h3>
+            <div id="participant-activities-content">
+                <!-- Content will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const ADMIN_PASSWORD = "ProductAcademy2024"; // SCHIMBĂ ACEASTĂ PAROLĂ!
+        let isAdmin = false;
+        let deleteMode = false;
+        let editMode = false;
+        let activityEditMode = false;
+
+        // Demo data
+        let participants = JSON.parse(localStorage.getItem('productAcademyParticipants')) || [
+            {
+                id: 'ana',
+                name: 'Ana-Maria Popescu',
+                email: 'ana.popescu@emag.ro',
+                team: 'Product Management',
+                role: 'Senior Product Manager',
+                points: 520
+            },
+            {
+                id: 'mihai', 
+                name: 'Mihai Alexandru',
+                email: 'mihai.alexandru@emag.ro',
+                team: 'UX/UI Design',
+                role: 'Lead UX Designer',
+                points: 280
+            },
+            {
+                id: 'diana',
+                name: 'Diana Ionescu', 
+                email: 'diana.ionescu@emag.ro',
+                team: 'Product Analytics',
+                role: 'Product Analyst',
+                points: 120
+            }
+        ];
+
+        let activities = JSON.parse(localStorage.getItem('productAcademyActivities')) || [
+            {
+                id: 'act1',
+                participantId: 'ana',
+                type: 'Speaker la eveniment',
+                points: 50,
+                description: 'Prezentare "User Research Best Practices"',
+                date: '2024-12-15T10:00:00.000Z'
+            },
+            {
+                id: 'act2',
+                participantId: 'mihai',
+                type: 'Articol newsletter',
+                points: 40,
+                description: 'Design Systems în Product Development',
+                date: '2024-12-12T14:30:00.000Z'
+            },
+            {
+                id: 'act3',
+                participantId: 'diana',
+                type: 'Case study',
+                points: 30,
+                description: 'Analiza comportamentului utilizatorilor',
+                date: '2024-12-10T16:15:00.000Z'
+            }
+        ];
+
+        // Activity types - editabile
+        let activityTypes = JSON.parse(localStorage.getItem('productAcademyActivityTypes')) || [
+            { id: 'participare-eveniment', name: 'Participare eveniment lunar', points: 20 },
+            { id: 'participare-activa', name: 'Participare activă cu întrebări', points: 10 },
+            { id: 'case-study', name: 'Prezentare case study', points: 30 },
+            { id: 'speaker', name: 'Speaker la eveniment', points: 50 },
+            { id: 'post-comunitate', name: 'Post în grupul de comunitate', points: 15 },
+            { id: 'raspuns-util', name: 'Răspuns util la întrebări', points: 10 },
+            { id: 'discutie-engaging', name: 'Inițiere discuție engaging', points: 25 },
+            { id: 'mentoring', name: 'Mentoring/ajutarea unui coleg', points: 30 },
+            { id: 'articol-newsletter', name: 'Articol pentru newsletter', points: 40 },
+            { id: 'sugestie-speaker', name: 'Sugestie speaker implementată', points: 30 },
+            { id: 'sugestie-tema', name: 'Sugestie temă folosită', points: 20 },
+            { id: 'review-continut', name: 'Review/feedback conținut', points: 15 },
+            { id: 'video-tutorial', name: 'Video tutorial/demo', points: 60 },
+            { id: 'bonus-monthly', name: 'Bonus lunar', points: 50 }
+        ];
+
+        function saveData() {
+            localStorage.setItem('productAcademyParticipants', JSON.stringify(participants));
+            localStorage.setItem('productAcademyActivities', JSON.stringify(activities));
+            localStorage.setItem('productAcademyActivityTypes', JSON.stringify(activityTypes));
+        }
+
+        function showTab(tabName) {
+            // Check if trying to access admin tabs without permission
+            if ((tabName === 'add-participant' || tabName === 'add-points' || tabName === 'manage-activities') && !isAdmin) {
+                alert('🔒 Acces restrictionat! Doar administratorul poate accesa această secțiune.');
+                return;
+            }
+
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'add-points') {
+                updateParticipantSelect();
+                updateActivitySelect();
+            } else if (tabName === 'manage-activities') {
+                updateActivityList();
+            } else if (tabName === 'activity') {
+                updateActivityLog();
+            }
+        }
+
+        function toggleAdmin() {
+            if (isAdmin) {
+                logout();
+            } else {
+                document.getElementById('login-modal').style.display = 'flex';
+            }
+        }
+
+        function attemptLogin() {
+            const password = document.getElementById('admin-password').value;
+            if (password === ADMIN_PASSWORD) {
+                isAdmin = true;
+                updateAdminStatus();
+                closeModal('login-modal');
+                alert('🎉 Conectare reușită! Acum ai acces la funcțiile de administrare.');
+            } else {
+                alert('❌ Parolă incorectă!');
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            if (modalId === 'login-modal') {
+                document.getElementById('admin-password').value = '';
+            }
+        }
+
+        function logout() {
+            isAdmin = false;
+            deleteMode = false;
+            editMode = false;
+            activityEditMode = false;
+            updateAdminStatus();
+            // Redirect to leaderboard if on admin tab
+            const adminTabs = ['add-participant', 'add-points', 'manage-activities'];
+            const currentTab = document.querySelector('.tab-content.active').id;
+            if (adminTabs.includes(currentTab)) {
+                showTab('leaderboard');
+            }
+            alert('👋 Te-ai deconectat cu succes!');
+        }
+
+        function updateAdminStatus() {
+            const statusEl = document.getElementById('admin-status');
+            const adminTabs = document.querySelectorAll('.tab.admin-only');
+            const adminToolbar = document.getElementById('admin-toolbar');
+            const activityAdminControls = document.getElementById('activity-admin-controls');
+
+            if (isAdmin) {
+                statusEl.textContent = '👑 Administrator';
+                statusEl.className = 'admin-status logged-in';
+                adminTabs.forEach(tab => tab.classList.add('show'));
+                adminToolbar.classList.add('show');
+                activityAdminControls.classList.add('show');
+            } else {
+                statusEl.textContent = '👤 Utilizator';
+                statusEl.className = 'admin-status';
+                adminTabs.forEach(tab => tab.classList.remove('show'));
+                adminToolbar.classList.remove('show');
+                activityAdminControls.classList.remove('show');
+            }
+
+            updateLeaderboard();
+            updateActivityLog();
+        }
+
+        function toggleDeleteMode() {
+            deleteMode = !deleteMode;
+            editMode = false; // Turn off edit mode
+            updateLeaderboard();
+            const btn = event.target;
+            if (deleteMode) {
+                btn.textContent = '✅ Ieși din Mod Ștergere';
+                btn.className = 'btn btn-danger';
+                alert('🗑️ Mod ștergere activat! Butoanele de ștergere sunt acum vizibile.');
+            } else {
+                btn.textContent = '🗑️ Mod Ștergere';
+                btn.className = 'btn btn-secondary';
+            }
+        }
+
+        function toggleEditMode() {
+            editMode = !editMode;
+            deleteMode = false; // Turn off delete mode
+            updateLeaderboard();
+            const btn = event.target;
+            if (editMode) {
+                btn.textContent = '✅ Ieși din Mod Editare';
+                btn.className = 'btn btn-warning';
+                alert('✏️ Mod editare puncte activat! Poți edita punctele fiecărui participant.');
+            } else {
+                btn.textContent = '✏️ Mod Editare Puncte';
+                btn.className = 'btn btn-info';
+            }
+        }
+
+        function toggleActivityEditMode() {
+            activityEditMode = !activityEditMode;
+            updateActivityLog();
+            const btn = event.target;
+            if (activityEditMode) {
+                btn.textContent = '✅ Ieși din Mod Editare';
+                btn.className = 'btn btn-danger';
+                alert('✏️ Mod editare activități activat! Poți șterge activități individuale.');
+            } else {
+                btn.textContent = '✏️ Editează Activități';
+                btn.className = 'btn btn-warning';
+            }
+        }
+
+        function deleteParticipant(participantId) {
+            if (!isAdmin || !deleteMode) return;
+
+            const participant = participants.find(p => p.id === participantId);
+            if (participant && confirm(`Sigur vrei să ștergi participantul "${participant.name}"?\n\nAceastă acțiune va șterge și toate activitățile acestuia și nu poate fi anulată!`)) {
+                participants = participants.filter(p => p.id !== participantId);
+                activities = activities.filter(a => a.participantId !== participantId);
+                
+                saveData();
+                updateLeaderboard();
+                updateParticipantSelect();
+                updateStats();
+                updateActivityLog();
+                
+                alert(`✅ Participantul "${participant.name}" a fost șters cu succes!`);
+            }
+        }
+
+        function editParticipantPoints(participantId) {
+            if (!isAdmin || !editMode) return;
+
+            const participant = participants.find(p => p.id === participantId);
+            if (!participant) return;
+
+            const content = document.getElementById('edit-points-content');
+            content.innerHTML = `
+                <div class="form-group">
+                    <label>Participant: <strong>${participant.name}</strong></label>
+                    <label>Echipa: ${participant.team}</label>
+                </div>
+                
+                <div class="form-group">
+                    <label for="new-points">Puncte noi:</label>
+                    <input type="number" id="new-points" value="${participant.points}" min="0" max="2000">
+                    <small>Puncte actuale: ${participant.points}</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-reason">Motivul modificării:</label>
+                    <textarea id="edit-reason" rows="2" placeholder="ex: Corecție punctaj greșit..."></textarea>
+                </div>
+                
+                <button class="btn btn-success" onclick="savePointsEdit('${participantId}')">💾 Salvează</button>
+                <button class="btn btn-secondary" onclick="closeModal('edit-points-modal')">Anulează</button>
+                
+                <hr style="margin: 20px 0;">
+                
+                <h4>Activitățile participantului:</h4>
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e9ecef; padding: 10px; border-radius: 5px;">
+                    ${getParticipantActivities(participantId)}
+                </div>
+            `;
+            
+            document.getElementById('edit-points-modal').style.display = 'flex';
+        }
+
+        function getParticipantActivities(participantId) {
+            const participantActivities = activities.filter(a => a.participantId === participantId);
+            if (participantActivities.length === 0) {
+                return '<p>Nu există activități înregistrate pentru acest participant.</p>';
+            }
+            
+            return participantActivities.map(activity => `
+                <div style="padding: 8px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">
+                    <strong>${activity.type}</strong> (+${activity.points}p)<br>
+                    <small>${activity.description || 'Fără descriere'} - ${new Date(activity.date).toLocaleDateString('ro-RO')}</small>
+                </div>
+            `).join('');
+        }
+
+        function savePointsEdit(participantId) {
+            const newPoints = parseInt(document.getElementById('new-points').value);
+            const reason = document.getElementById('edit-reason').value;
+
+            if (isNaN(newPoints) || newPoints < 0) {
+                alert('Te rog introdu un număr valid de puncte!');
+                return;
+            }
+
+            const participant = participants.find(p => p.id === participantId);
+            if (!participant) return;
+
+            const oldPoints = participant.points;
+            participant.points = newPoints;
+
+            // Add an activity log for the edit
+            if (reason) {
+                activities.push({
+                    id: Date.now().toString(),
+                    participantId: participantId,
+                    type: 'Corecție punctaj',
+                    points: newPoints - oldPoints,
+                    description: `Punctaj modificat de la ${oldPoints} la ${newPoints}. Motiv: ${reason}`,
+                    date: new Date().toISOString()
+                });
+            }
+
+            saveData();
+            updateLeaderboard();
+            updateStats();
+            updateActivityLog();
+            closeModal('edit-points-modal');
+            
+            alert(`✅ Punctajul pentru ${participant.name} a fost actualizat la ${newPoints} puncte!`);
+        }
+
+        function deleteActivity(activityId) {
+            if (!isAdmin || !activityEditMode) return;
+
+            const activity = activities.find(a => a.id === activityId);
+            if (!activity) return;
+
+            const participant = participants.find(p => p.id === activity.participantId);
+            if (!participant) return;
+
+            if (confirm(`Sigur vrei să ștergi activitatea "${activity.type}" (${activity.points}p) pentru ${participant.name}?\n\nPunctajul va fi scăzut automat.`)) {
+                // Remove points from participant
+                participant.points -= activity.points;
+                if (participant.points < 0) participant.points = 0;
+
+                // Remove activity
+                activities = activities.filter(a => a.id !== activityId);
+
+                saveData();
+                updateLeaderboard();
+                updateStats();
+                updateActivityLog();
+                
+                alert(`✅ Activitatea a fost ștearsă și punctajul pentru ${participant.name} a fost actualizat!`);
+            }
+        }
+
+        function addActivityType() {
+            const name = document.getElementById('new-activity-name').value.trim();
+            const points = parseInt(document.getElementById('new-activity-points').value);
+
+            if (!name || !points || points < 1) {
+                alert('Te rog completează numele activității și un număr valid de puncte!');
+                return;
+            }
+
+            const id = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+            
+            if (activityTypes.find(a => a.id === id)) {
+                alert('Există deja o activitate cu acest nume!');
+                return;
+            }
+
+            activityTypes.push({
+                id: id,
+                name: name,
+                points: points
+            });
+
+            saveData();
+            updateActivityList();
+            updateActivitySelect();
+            
+            document.getElementById('new-activity-name').value = '';
+            document.getElementById('new-activity-points').value = '';
+            
+            alert(`✅ Activitatea "${name}" a fost adăugată cu ${points} puncte!`);
+        }
+
+        function editActivity(id) {
+            const activity = activityTypes.find(a => a.id === id);
+            if (!activity) return;
+
+            const newName = prompt('Nume nou pentru activitate:', activity.name);
+            if (newName === null) return;
+
+            const newPoints = prompt('Puncte noi pentru activitate:', activity.points);
+            if (newPoints === null) return;
+
+            const points = parseInt(newPoints);
+            if (isNaN(points) || points < 1) {
+                alert('Punctele trebuie să fie un număr pozitiv!');
+                return;
+            }
+
+            activity.name = newName.trim();
+            activity.points = points;
+
+            saveData();
+            updateActivityList();
+            updateActivitySelect();
+            
+            alert(`✅ Activitatea a fost actualizată!`);
+        }
+
+        function deleteActivity(id) {
+            const activity = activityTypes.find(a => a.id === id);
+            if (!activity) return;
+
+            if (confirm(`Sigur vrei să ștergi activitatea "${activity.name}"?\n\nAceastă acțiune nu poate fi anulată!`)) {
+                activityTypes = activityTypes.filter(a => a.id !== id);
+                saveData();
+                updateActivityList();
+                updateActivitySelect();
+                alert(`✅ Activitatea "${activity.name}" a fost ștearsă!`);
+            }
+        }
+
+        function updateActivityList() {
+            const list = document.getElementById('activity-list');
+            list.innerHTML = '';
+
+            if (activityTypes.length === 0) {
+                list.innerHTML = '<div class="demo-content">Nu există activități definite încă.</div>';
+                return;
+            }
+
+            activityTypes.forEach(activity => {
+                const div = document.createElement('div');
+                div.className = 'activity-entry';
+                div.innerHTML = `
+                    <div class="activity-entry-info">
+                        <div class="activity-entry-name">${activity.name}</div>
+                        <div class="activity-entry-points">${activity.points} puncte</div>
+                    </div>
+                    <div class="activity-entry-actions">
+                        <button class="btn btn-warning btn-small" onclick="editActivity('${activity.id}')">✏️ Editează</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteActivityType('${activity.id}')">🗑️ Șterge</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function deleteActivityType(id) {
+            const activity = activityTypes.find(a => a.id === id);
+            if (!activity) return;
+
+            if (confirm(`Sigur vrei să ștergi tipul de activitate "${activity.name}"?\n\nAceastă acțiune nu poate fi anulată!`)) {
+                activityTypes = activityTypes.filter(a => a.id !== id);
+                saveData();
+                updateActivityList();
+                updateActivitySelect();
+                alert(`✅ Tipul de activitate "${activity.name}" a fost șters!`);
+            }
+        }
+
+        function updateActivitySelect() {
+            const select = document.getElementById('activity-type');
+            select.innerHTML = '<option value="">Alege activitatea...</option>';
+            
+            activityTypes.forEach(activity => {
+                const option = document.createElement('option');
+                option.value = activity.id;
+                option.textContent = `${activity.name} (${activity.points}p)`;
+                select.appendChild(option);
+            });
+        }
+
+        function updateLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboard-list');
+            
+            if (participants.length === 0) {
+                leaderboardList.innerHTML = '<div class="demo-content">Nu există participanți încă. Administratorul poate adăuga primul participant!</div>';
+                return;
+            }
+            
+            const sortedParticipants = [...participants].sort((a, b) => b.points - a.points);
+            
+            leaderboardList.innerHTML = '';
+            
+            sortedParticipants.forEach((participant, index) => {
+                const participantDiv = document.createElement('div');
+                participantDiv.className = 'participant';
+                
+                let actions = '';
+                if (isAdmin && (deleteMode || editMode)) {
+                    actions = `<div class="participant-actions show">`;
+                    
+                    if (deleteMode) {
+                        actions += `<button class="btn btn-danger btn-small" onclick="deleteParticipant('${participant.id}')">🗑️ Șterge</button>`;
+                    }
+                    
+                    if (editMode) {
+                        actions += `<button class="btn btn-warning btn-small" onclick="editParticipantPoints('${participant.id}')">✏️ Editează Puncte</button>`;
+                    }
+                    
+                    actions += `</div>`;
+                }
+                
+                participantDiv.innerHTML = `
+                    <div class="rank">#${index + 1}</div>
+                    <div class="participant-info">
+                        <div class="participant-name">${participant.name}</div>
+                        <div class="participant-team">Echipa: ${participant.team}</div>
+                    </div>
+                    <div class="points">${participant.points}p</div>
+                    ${actions}
+                `;
+                
+                leaderboardList.appendChild(participantDiv);
+            });
+            
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('total-participants').textContent = participants.length;
+            document.getElementById('total-points').textContent = participants.reduce((sum, p) => sum + p.points, 0);
+            
+            const thisMonth = new Date().getMonth();
+            const thisMonthActivities = activities.filter(activity => 
+                new Date(activity.date).getMonth() === thisMonth
+            );
+            document.getElementById('this-month-activities').textContent = thisMonthActivities.length;
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ro-RO');
+        }
+
+        function updateParticipantSelect() {
+            const select = document.getElementById('select-participant');
+            select.innerHTML = '<option value="">Alege participant...</option>';
+            
+            participants.forEach(participant => {
+                const option = document.createElement('option');
+                option.value = participant.id;
+                option.textContent = `${participant.name} (${participant.team})`;
+                select.appendChild(option);
+            });
+        }
+
+        function updateActivityLog() {
+            const activityLog = document.getElementById('activity-log');
+            
+            if (activities.length === 0) {
+                activityLog.innerHTML = '<div class="demo-content">Nu există activități înregistrate încă.</div>';
+                return;
+            }
+            
+            activityLog.innerHTML = '';
+            
+            const sortedActivities = [...activities].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedActivities.forEach(activity => {
+                const participant = participants.find(p => p.id === activity.participantId);
+                if (participant) {
+                    const activityDiv = document.createElement('div');
+                    activityDiv.className = 'activity-item';
+                    
+                    let actions = '';
+                    if (isAdmin && activityEditMode) {
+                        actions = `
+                            <div class="activity-actions show">
+                                <button class="btn btn-danger btn-small" onclick="deleteActivity('${activity.id}')">🗑️ Șterge</button>
+                            </div>
+                        `;
+                    }
+                    
+                    activityDiv.innerHTML = `
+                        <div class="activity-content">
+                            <strong>${participant.name}</strong> - ${activity.type} 
+                            <span style="color: #28a745; font-weight: bold;">(+${activity.points}p)</span><br>
+                            <small>${activity.description || ''} - ${new Date(activity.date).toLocaleDateString('ro-RO')}</small>
+                        </div>
+                        ${actions}
+                    `;
+                    activityLog.appendChild(activityDiv);
+                }
+            });
+        }
+
+        function refreshData() {
+            updateLeaderboard();
+            updateActivityLog();
+            alert('Datele au fost actualizate! 🔄');
+        }
+
+        function exportData() {
+            const csvContent = [
+                ['Rank', 'Name', 'Team', 'Points'],
+                ...participants
+                    .sort((a, b) => b.points - a.points)
+                    .map((p, i) => [i + 1, p.name, p.team, p.points])
+            ].map(row => row.join(',')).join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `product_academy_leaderboard_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            
+            alert('Datele au fost exportate! 📥');
+        }
+
+        // Event listeners
+        document.getElementById('participant-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!isAdmin) {
+                alert('🔒 Nu ai permisiuni pentru această acțiune!');
+                return;
+            }
+            
+            const name = document.getElementById('participant-name').value;
+            const email = document.getElementById('participant-email').value;
+            const team = document.getElementById('participant-team').value;
+            const role = document.getElementById('participant-role').value;
+            
+            const newParticipant = {
+                id: Date.now().toString(),
+                name: name,
+                email: email,
+                team: team,
+                role: role,
+                points: 0
+            };
+            
+            participants.push(newParticipant);
+            saveData();
+            updateParticipantSelect();
+            updateLeaderboard();
+            
+            alert(`Participant ${name} a fost adăugat cu succes! 🎉`);
+            this.reset();
+        });
+
+        document.getElementById('points-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!isAdmin) {
+                alert('🔒 Nu ai permisiuni pentru această acțiune!');
+                return;
+            }
+            
+            const participantId = document.getElementById('select-participant').value;
+            const activityTypeId = document.getElementById('activity-type').value;
+            const description = document.getElementById('activity-description').value;
+            
+            if (!participantId || !activityTypeId) {
+                alert('Te rog completează toate câmpurile obligatorii!');
+                return;
+            }
+
+            const activityType = activityTypes.find(a => a.id === activityTypeId);
+            if (!activityType) {
+                alert('Activitatea selectată nu există!');
+                return;
+            }
+            
+            const participant = participants.find(p => p.id === participantId);
+            if (participant) {
+                participant.points += activityType.points;
+                
+                const activity = {
+                    id: Date.now().toString(),
+                    participantId: participantId,
+                    type: activityType.name,
+                    points: activityType.points,
+                    description: description,
+                    date: new Date().toISOString()
+                };
+                
+                activities.push(activity);
+                saveData();
+                updateLeaderboard();
+                updateActivityLog();
+                
+                alert(`Puncte adăugate cu succes! ${participant.name} are acum ${participant.points} puncte. 🎯`);
+                this.reset();
+            }
+        });
+
+        document.getElementById('activity-management-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            addActivityType();
+        });
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
+
+        // Initialize
+        updateLeaderboard();
+        updateActivitySelect();
+        updateActivityLog();
+        
+        // Show welcome message for regular users
+        setTimeout(() => {
+            if (!isAdmin) {
+                alert('🚀 Bun venit la Product Academy Leaderboard!\n\n📊 Poți vedea ranking-ul și activitățile colegilor\n🔒 Administratorul gestionează participanții și punctajele\n\nHappy learning! 🎯');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
